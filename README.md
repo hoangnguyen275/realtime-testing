@@ -35,7 +35,6 @@ A full-stack, real-time messaging application with direct and group chats, frien
 - [Data Models](#-data-models)
 - [Deployment](#-deployment)
 - [Roadmap](#-roadmap)
-- [Acknowledgements](#-acknowledgements)
 
 ---
 
