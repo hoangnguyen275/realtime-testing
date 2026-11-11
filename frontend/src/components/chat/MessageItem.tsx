@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { cn, formatMessageTime } from "@/lib/utils";
 import type { Conversation, Message, Participant } from "@/types/chat";
 import UserAvatar from "./UserAvatar";
 import { Card } from "../ui/card";
 import { Badge } from "../ui/badge";
+import ImageViewer from "./ImageViewer";
 
 interface MessageItemProps {
   message: Message;
@@ -19,6 +21,7 @@ const MessageItem = ({
   selectedConvo,
   lastMessageStatus,
 }: MessageItemProps) => {
+  const [viewerOpen, setViewerOpen] = useState(false);
   const prev = index + 1 < messages.length ? messages[index + 1] : undefined;
 
   const isShowTime =
@@ -75,14 +78,26 @@ const MessageItem = ({
             )}
           >
             {message.imgUrl && (
-              <a href={message.imgUrl} target="_blank" rel="noopener noreferrer">
-                <img
+              <>
+                <button
+                  type="button"
+                  onClick={() => setViewerOpen(true)}
+                  aria-label="View image"
+                  className="block cursor-zoom-in"
+                >
+                  <img
+                    src={message.imgUrl}
+                    alt="Sent image"
+                    loading="lazy"
+                    className="max-h-72 w-full rounded-md object-cover"
+                  />
+                </button>
+                <ImageViewer
                   src={message.imgUrl}
-                  alt="Sent image"
-                  loading="lazy"
-                  className="max-h-72 w-full rounded-md object-cover"
+                  open={viewerOpen}
+                  onOpenChange={setViewerOpen}
                 />
-              </a>
+              </>
             )}
             {message.content && (
               <p
