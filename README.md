@@ -322,6 +322,7 @@ Base URL: `http://localhost:5001/api`. All routes except `/auth/*` require `Auth
 | `POST` | `/friends/requests` | Send a friend request (`to`, optional `message`) |
 | `POST` | `/friends/requests/:requestId/accept` | Accept a request |
 | `POST` | `/friends/requests/:requestId/decline` | Decline a request |
+| `DELETE` | `/friends/:friendId` | Unfriend: removes the friendship and the direct chat for both users |
 
 ### Conversations & Messages
 | Method | Endpoint | Description |
@@ -330,6 +331,9 @@ Base URL: `http://localhost:5001/api`. All routes except `/auth/*` require `Auth
 | `POST`  | `/conversations` | Create a direct (`recipientId`) or group (`name`, `memberIds`) conversation, friends only |
 | `GET`   | `/conversations/:id/messages?limit=50&cursor=` | Paginated message history |
 | `PATCH` | `/conversations/:id/seen` | Mark the conversation as seen |
+| `PATCH` | `/conversations/:id/mute` | Mute or unmute for the current user (`muted: true/false`) |
+| `POST`  | `/conversations/:id/leave` | Leave a group |
+| `DELETE` | `/conversations/:id` | Delete the conversation for the current user only |
 | `POST`  | `/messages/direct` | Send a direct message (friends only) |
 | `POST`  | `/messages/group` | Send a group message (members only) |
 
@@ -375,6 +379,6 @@ Interactive Swagger docs are available while the server is running:
 - [ ] Image messages (the `imgUrl` field already exists in the schema)
 - [ ] Typing indicators
 - [ ] Save profile edits (personal info, bio) to the server
-- [ ] Remove friends and leave groups
+- [x] Remove friends and leave groups
 - [ ] Message edit and delete
 - [ ] Push notifications

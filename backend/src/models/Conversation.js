@@ -11,6 +11,15 @@ const participantSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    // "Delete conversation" is per user: hide it and ignore messages sent before clearedAt
+    hidden: {
+      type: Boolean,
+      default: false,
+    },
+    clearedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     _id: false,
@@ -81,6 +90,12 @@ const conversationSchema = new mongoose.Schema(
       type: lastMessageSchema,
       default: null,
     },
+    mutedBy: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     unreadCounts: {
       type: Map,
       of: Number,

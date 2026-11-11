@@ -1,8 +1,9 @@
 import { friendService } from "@/services/friendService";
 import type { FriendState } from "@/types/store";
 import { create } from "zustand";
+import { useChatStore } from "./useChatStore";
 
-export const useFriendStore = create<FriendState>((set, get) => ({
+export const useFriendStore = create<FriendState>((set) => ({
   friends: [],
   loading: false,
   receivedList: [],
@@ -75,6 +76,15 @@ export const useFriendStore = create<FriendState>((set, get) => ({
     } finally {
       set({ loading: false });
     }
+  },
+  removeFriendLocally: (friendId) => {
+    set((state) => ({ friends: state.friends.filter((f) => f._id !== friendId) }));
+  },
+  unfriend: async (friendId) => {
+    const { conversationId } = await friendService.removeFriend(friendId);
+
+    useFriendStore.getState().removeFriendLocally(friendId);
+    if (conversationId) useChatStore.getState().removeConversation(conversationId);
   },
   getFriends: async () => {
     try {

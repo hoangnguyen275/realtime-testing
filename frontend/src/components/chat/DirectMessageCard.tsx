@@ -7,6 +7,7 @@ import UserAvatar from "./UserAvatar";
 import StatusBadge from "./StatusBadge";
 import UnreadCountBadge from "./UnreadCountBadge";
 import { useSocketStore } from "@/stores/useSocketStore";
+import ChatCardMenu from "./ChatCardMenu";
 
 const DirectMessageCard = ({ convo }: { convo: Conversation }) => {
   const { user } = useAuthStore();
@@ -19,7 +20,9 @@ const DirectMessageCard = ({ convo }: { convo: Conversation }) => {
   const otherUser = convo.participants.find((p) => p._id !== user._id);
   if (!otherUser) return null;
 
-  const unreadCount = convo.unreadCounts[user._id];
+  const muted = !!convo.mutedBy?.includes(user._id);
+  // muted conversations keep counting but stay quiet in the list
+  const unreadCount = muted ? 0 : convo.unreadCounts[user._id];
   const lastMessage = convo.lastMessage?.content ?? "";
 
   const handleSelectConversation = async (id: string) => {
@@ -40,6 +43,8 @@ const DirectMessageCard = ({ convo }: { convo: Conversation }) => {
       }
       isActive={activeConversationId === convo._id}
       onSelect={handleSelectConversation}
+      muted={muted}
+      menu={<ChatCardMenu convo={convo} />}
       unreadCount={unreadCount}
       leftSection={
         <>

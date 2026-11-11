@@ -5,6 +5,18 @@ import {
   updateConversationAfterCreateMessage,
 } from "../utils/messageHelper.js";
 import { io } from "../socket/index.js";
+import { uploadImageFromBuffer } from "../middlewares/uploadMiddleware.js";
+
+const uploadMessageImageFile = async (file) => {
+  if (!file) return undefined;
+
+  const result = await uploadImageFromBuffer(file.buffer, {
+    folder: "terces_chat/messages",
+    transformation: [{ width: 1600, crop: "limit" }],
+  });
+
+  return result.secure_url;
+};
 
 export const sendDirectMessage = async (req, res) => {
   try {
@@ -13,9 +25,11 @@ export const sendDirectMessage = async (req, res) => {
 
     let conversation;
 
-    if (!content) {
-      return res.status(400).json({ message: "Content is required" });
+    if (!content?.trim() && !req.file) {
+      return res.status(400).json({ message: "Content or an image is required" });
     }
+
+    const imgUrl = await uploadMessageImageFile(req.file);
 
     if (conversationId) {
       conversation = await Conversation.findById(conversationId);
@@ -37,6 +51,7 @@ export const sendDirectMessage = async (req, res) => {
       conversationId: conversation._id,
       senderId,
       content,
+      imgUrl,
     });
 
     updateConversationAfterCreateMessage(conversation, message, senderId);
@@ -58,14 +73,17 @@ export const sendGroupMessage = async (req, res) => {
     const senderId = req.user._id;
     const conversation = req.conversation;
 
-    if (!content) {
-      return res.status(400).json("Content is required");
+    if (!content?.trim() && !req.file) {
+      return res.status(400).json({ message: "Content or an image is required" });
     }
+
+    const imgUrl = await uploadMessageImageFile(req.file);
 
     const message = await Message.create({
       conversationId,
       senderId,
       content,
+      imgUrl,
     });
 
     updateConversationAfterCreateMessage(conversation, message, senderId);

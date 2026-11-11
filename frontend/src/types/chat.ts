@@ -36,6 +36,7 @@ export interface Conversation {
   seenBy: SeenUser[];
   lastMessage: LastMessage | null;
   unreadCounts: Record<string, number>; // key = userId, value = unread count
+  mutedBy?: string[]; // ids of users who muted this conversation
   createdAt: string;
   updatedAt: string;
 }

@@ -70,11 +70,30 @@ const MessageItem = ({
         >
           <Card
             className={cn(
-              "p-3",
+              message.imgUrl ? "p-1.5 gap-1.5" : "p-3",
               message.isOwn ? "chat-bubble-sent border-0" : "chat-bubble-received"
             )}
           >
-            <p className="text-sm leading-relaxed break-words">{message.content}</p>
+            {message.imgUrl && (
+              <a href={message.imgUrl} target="_blank" rel="noopener noreferrer">
+                <img
+                  src={message.imgUrl}
+                  alt="Sent image"
+                  loading="lazy"
+                  className="max-h-72 w-full rounded-md object-cover"
+                />
+              </a>
+            )}
+            {message.content && (
+              <p
+                className={cn(
+                  "text-sm leading-relaxed break-words",
+                  message.imgUrl && "px-1.5 pb-1"
+                )}
+              >
+                {message.content}
+              </p>
+            )}
           </Card>
 
           {/* seen/ delivered */}

@@ -3,6 +3,7 @@ import { io, type Socket } from "socket.io-client";
 import { useAuthStore } from "./useAuthStore";
 import type { SocketState } from "@/types/store";
 import { useChatStore } from "./useChatStore";
+import { useFriendStore } from "./useFriendStore";
 
 const baseURL = import.meta.env.VITE_SOCKET_URL;
 
@@ -32,7 +33,13 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     });
 
     // new message
-    socket.on("new-message", ({ message, conversation, unreadCounts }) => {
+    socket.on("new-message", async ({ message, conversation, unreadCounts }) => {
+      // a conversation the user deleted comes back when someone writes to it
+      const known = useChatStore
+        .getState()
+        .conversations.some((c) => c._id === message.conversationId);
+      if (!known) await useChatStore.getState().fetchConversations();
+
       useChatStore.getState().addMessage(message);
 
       const lastMessage = {
@@ -70,6 +77,22 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       };
 
       useChatStore.getState().updateConversation(updated);
+    });
+
+    // unfriended (by me or by the other person)
+    socket.on("friend-removed", ({ friendId, conversationId }) => {
+      useFriendStore.getState().removeFriendLocally(friendId);
+      if (conversationId) useChatStore.getState().removeConversation(conversationId);
+    });
+
+    // deleted or left a conversation (keeps my other tabs in sync)
+    socket.on("conversation-removed", ({ conversationId }) => {
+      useChatStore.getState().removeConversation(conversationId);
+    });
+
+    // someone left a group I am in
+    socket.on("member-left", ({ conversationId, userId }) => {
+      useChatStore.getState().removeMember(conversationId, userId);
     });
 
     // new group chat

@@ -8,13 +8,14 @@ export const updateConversationAfterCreateMessage = (
     lastMessageAt: message.createdAt,
     lastMessage: {
       _id: message._id,
-      content: message.content,
+      content: message.content || (message.imgUrl ? "📷 Image" : ""),
       senderId,
       createdAt: message.createdAt,
     },
   });
 
   conversation.participants.forEach((p) => {
+    p.hidden = false; // a new message brings a deleted conversation back
     const memberId = p.userId.toString();
     const isSender = memberId === senderId.toString();
     const prevCount = conversation.unreadCounts.get(memberId) || 0;

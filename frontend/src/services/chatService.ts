@@ -8,6 +8,18 @@ interface FetchMessageProps {
 
 const pageLimit = 50;
 
+// With an image, send multipart/form-data (the browser sets the boundary); otherwise plain JSON.
+const buildMessagePayload = (fields: Record<string, string | undefined>, file?: File) => {
+  if (!file) return fields;
+
+  const formData = new FormData();
+  Object.entries(fields).forEach(([key, value]) => {
+    if (value !== undefined) formData.append(key, value);
+  });
+  formData.append("file", file);
+  return formData;
+};
+
 export const chatService = {
   async fetchConversations(): Promise<ConversationResponse> {
     const res = await api.get("/conversations");
@@ -25,35 +37,41 @@ export const chatService = {
   async sendDirectMessage(
     recipientId: string,
     content: string = "",
-    imgUrl?: string,
+    file?: File,
     conversationId?: string
   ) {
-    const res = await api.post("/messages/direct", {
-      recipientId,
-      content,
-      imgUrl,
-      conversationId,
-    });
+    const res = await api.post(
+      "/messages/direct",
+      buildMessagePayload({ recipientId, content, conversationId }, file)
+    );
 
     return res.data.message;
   },
 
-  async sendGroupMessage(
-    conversationId: string,
-    content: string = "",
-    imgUrl?: string
-  ) {
-    const res = await api.post("/messages/group", {
-      conversationId,
-      content,
-      imgUrl,
-    });
+  async sendGroupMessage(conversationId: string, content: string = "", file?: File) {
+    const res = await api.post(
+      "/messages/group",
+      buildMessagePayload({ conversationId, content }, file)
+    );
     return res.data.message;
   },
 
   async markAsSeen(conversationId: string) {
     const res = await api.patch(`/conversations/${conversationId}/seen`);
     return res.data;
+  },
+
+  async deleteConversation(conversationId: string) {
+    await api.delete(`/conversations/${conversationId}`);
+  },
+
+  async muteConversation(conversationId: string, muted: boolean): Promise<string[]> {
+    const res = await api.patch(`/conversations/${conversationId}/mute`, { muted });
+    return res.data.mutedBy;
+  },
+
+  async leaveGroup(conversationId: string) {
+    await api.post(`/conversations/${conversationId}/leave`);
   },
 
   async createConversation(

@@ -51,19 +51,25 @@ export interface ChatState {
   sendDirectMessage: (
     recipientId: string,
     content: string,
-    imgUrl?: string
+    file?: File
   ) => Promise<void>;
   sendGroupMessage: (
     conversationId: string,
     content: string,
-    imgUrl?: string
+    file?: File
   ) => Promise<void>;
   // add message
   addMessage: (message: Message) => Promise<void>;
   // update convo
-  updateConversation: (conversation: unknown) => void;
+  updateConversation: (conversation: Partial<Conversation> & { _id: string }) => void;
   markAsSeen: () => Promise<void>;
   addConvo: (convo: Conversation) => void;
+  // conversation menu actions
+  removeConversation: (conversationId: string) => void;
+  removeMember: (conversationId: string, userId: string) => void;
+  deleteConversation: (conversationId: string) => Promise<void>;
+  muteConversation: (conversationId: string, muted: boolean) => Promise<void>;
+  leaveGroup: (conversationId: string) => Promise<void>;
   createConversation: (
     type: "group" | "direct",
     name: string,
@@ -89,6 +95,8 @@ export interface FriendState {
   acceptRequest: (requestId: string) => Promise<void>;
   declineRequest: (requestId: string) => Promise<void>;
   getFriends: () => Promise<void>;
+  removeFriendLocally: (friendId: string) => void;
+  unfriend: (friendId: string) => Promise<void>;
 }
 
 export interface UserState {

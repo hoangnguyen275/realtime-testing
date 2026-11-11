@@ -84,13 +84,13 @@ export const useChatStore = create<ChatState>()(
           set({ messageLoading: false });
         }
       },
-      sendDirectMessage: async (recipientId, content, imgUrl) => {
+      sendDirectMessage: async (recipientId, content, file) => {
         try {
           const { activeConversationId } = get();
           await chatService.sendDirectMessage(
             recipientId,
             content,
-            imgUrl,
+            file,
             activeConversationId || undefined
           );
           set((state) => ({
@@ -100,11 +100,12 @@ export const useChatStore = create<ChatState>()(
           }));
         } catch (error) {
           console.error("Error while sending direct message", error);
+          throw error;
         }
       },
-      sendGroupMessage: async (conversationId, content, imgUrl) => {
+      sendGroupMessage: async (conversationId, content, file) => {
         try {
-          await chatService.sendGroupMessage(conversationId, content, imgUrl);
+          await chatService.sendGroupMessage(conversationId, content, file);
           set((state) => ({
             conversations: state.conversations.map((c) =>
               c._id === get().activeConversationId ? { ...c, seenBy: [] } : c
@@ -112,6 +113,7 @@ export const useChatStore = create<ChatState>()(
           }));
         } catch (error) {
           console.error("Error while sending group message", error);
+          throw error;
         }
       },
       addMessage: async (message) => {
@@ -208,6 +210,40 @@ export const useChatStore = create<ChatState>()(
             activeConversationId: convo._id,
           };
         });
+      },
+      removeConversation: (conversationId) => {
+        set((state) => {
+          const { [conversationId]: _removed, ...restMessages } = state.messages;
+          return {
+            conversations: state.conversations.filter((c) => c._id !== conversationId),
+            messages: restMessages,
+            activeConversationId:
+              state.activeConversationId === conversationId
+                ? null
+                : state.activeConversationId,
+          };
+        });
+      },
+      removeMember: (conversationId, userId) => {
+        set((state) => ({
+          conversations: state.conversations.map((c) =>
+            c._id === conversationId
+              ? { ...c, participants: c.participants.filter((p) => p._id !== userId) }
+              : c
+          ),
+        }));
+      },
+      deleteConversation: async (conversationId) => {
+        await chatService.deleteConversation(conversationId);
+        get().removeConversation(conversationId);
+      },
+      muteConversation: async (conversationId, muted) => {
+        const mutedBy = await chatService.muteConversation(conversationId, muted);
+        get().updateConversation({ _id: conversationId, mutedBy });
+      },
+      leaveGroup: async (conversationId) => {
+        await chatService.leaveGroup(conversationId);
+        get().removeConversation(conversationId);
       },
       createConversation: async (type, name, memberIds) => {
         try {

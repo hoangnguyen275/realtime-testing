@@ -25,8 +25,26 @@ const ProtectedRoute = () => {
 
   if (starting || loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        Loading page...
+      <div
+        role="status"
+        aria-live="polite"
+        className="flex h-screen flex-col items-center justify-center gap-2 px-4 text-center"
+      >
+        <p className="text-lg font-medium">Loading page</p>
+        <p className="text-sm text-muted-foreground">
+          The project is starting up and it might take a few minutes
+          <span aria-hidden="true">
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                className="animate-pulse"
+                style={{ animationDelay: `${i * 0.25}s`, animationDuration: "1s" }}
+              >
+                .
+              </span>
+            ))}
+          </span>
+        </p>
       </div>
     );
   }

@@ -8,7 +8,32 @@ export const upload = multer({
   },
 });
 
-export const uploadImageFromBuffer = (buffer, options) => {
+const messageImageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image files are allowed"));
+    }
+  },
+}).single("file");
+
+// Optional image on a chat message (multipart field "file"). Plain JSON requests pass through.
+export const uploadMessageImage = (req, res, next) => {
+  messageImageUpload(req, res, (error) => {
+    if (!error) return next();
+
+    const message =
+      error.code === "LIMIT_FILE_SIZE" ? "Image must be 5MB or smaller" : error.message;
+    return res.status(400).json({ message });
+  });
+};
+
+export const uploadImageFromBuffer =(buffer, options) => {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {

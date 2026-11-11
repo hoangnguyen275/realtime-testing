@@ -1,6 +1,10 @@
 import Friend from "../models/Friend.js";
 import User from "../models/User.js";
 import FriendRequest from "../models/FriendRequest.js";
+import Conversation from "../models/Conversation.js";
+import Message from "../models/Message.js";
+import mongoose from "mongoose";
+import { io } from "../socket/index.js";
 
 export const sendFriendRequest = async (req, res) => {
   try {
@@ -175,6 +179,45 @@ export const getFriendRequests = async (req, res) => {
     res.status(200).json({ sent, received });
   } catch (error) {
     console.error("Error while loading friend request list", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Unfriend: removes the friendship and the direct conversation (with its messages) for both users
+export const removeFriend = async (req, res) => {
+  try {
+    const userId = req.user._id.toString();
+    const { friendId } = req.params;
+
+    if (!mongoose.isValidObjectId(friendId)) {
+      return res.status(400).json({ message: "Invalid friend id" });
+    }
+
+    const [userA, userB] = userId < friendId ? [userId, friendId] : [friendId, userId];
+
+    const friendship = await Friend.findOneAndDelete({ userA, userB });
+
+    if (!friendship) {
+      return res.status(404).json({ message: "You are not friends with this user" });
+    }
+
+    const conversation = await Conversation.findOneAndDelete({
+      type: "direct",
+      "participants.userId": { $all: [userId, friendId] },
+    });
+
+    const conversationId = conversation?._id.toString() ?? null;
+
+    if (conversation) {
+      await Message.deleteMany({ conversationId: conversation._id });
+    }
+
+    io.to(userId).emit("friend-removed", { friendId, conversationId });
+    io.to(friendId).emit("friend-removed", { friendId: userId, conversationId });
+
+    return res.status(200).json({ friendId, conversationId });
+  } catch (error) {
+    console.error("Error while removing friend", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };

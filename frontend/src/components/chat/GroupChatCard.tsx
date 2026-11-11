@@ -4,6 +4,7 @@ import type { Conversation } from "@/types/chat";
 import ChatCard from "./ChatCard";
 import UnreadCountBadge from "./UnreadCountBadge";
 import GroupChatAvatar from "./GroupChatAvatar";
+import ChatCardMenu from "./ChatCardMenu";
 
 const GroupChatCard = ({ convo }: { convo: Conversation }) => {
   const { user } = useAuthStore();
@@ -12,7 +13,9 @@ const GroupChatCard = ({ convo }: { convo: Conversation }) => {
 
   if (!user) return null;
 
-  const unreadCount = convo.unreadCounts[user._id];
+  const muted = !!convo.mutedBy?.includes(user._id);
+  // muted conversations keep counting but stay quiet in the list
+  const unreadCount = muted ? 0 : convo.unreadCounts[user._id];
   const name = convo.group?.name ?? "";
   const handleSelectConversation = async (id: string) => {
     setActiveConversation(id);
@@ -32,6 +35,8 @@ const GroupChatCard = ({ convo }: { convo: Conversation }) => {
       }
       isActive={activeConversationId === convo._id}
       onSelect={handleSelectConversation}
+      muted={muted}
+      menu={<ChatCardMenu convo={convo} />}
       unreadCount={unreadCount}
       leftSection={
         <>
