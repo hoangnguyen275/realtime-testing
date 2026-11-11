@@ -38,20 +38,26 @@ export const chatService = {
     recipientId: string,
     content: string = "",
     file?: File,
-    conversationId?: string
+    conversationId?: string,
+    imgUrl?: string // an already-uploaded image (used when forwarding)
   ) {
     const res = await api.post(
       "/messages/direct",
-      buildMessagePayload({ recipientId, content, conversationId }, file)
+      buildMessagePayload({ recipientId, content, conversationId, imgUrl }, file)
     );
 
     return res.data.message;
   },
 
-  async sendGroupMessage(conversationId: string, content: string = "", file?: File) {
+  async sendGroupMessage(
+    conversationId: string,
+    content: string = "",
+    file?: File,
+    imgUrl?: string // an already-uploaded image (used when forwarding)
+  ) {
     const res = await api.post(
       "/messages/group",
-      buildMessagePayload({ conversationId, content }, file)
+      buildMessagePayload({ conversationId, content, imgUrl }, file)
     );
     return res.data.message;
   },

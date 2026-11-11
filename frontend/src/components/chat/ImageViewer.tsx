@@ -1,6 +1,7 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Download, Share2, X } from "lucide-react";
-import { toast } from "sonner";
+import { useState } from "react";
+import ForwardImageDialog from "./ForwardImageDialog";
 
 interface ImageViewerProps {
   src: string;
@@ -10,27 +11,19 @@ interface ImageViewerProps {
 }
 
 // Cloudinary: the fl_attachment flag makes the browser download the file instead of opening it
-const toDownloadUrl = (url: string) => url.replace("/upload/", "/upload/fl_attachment/");
+const toDownloadUrl = (url: string) =>
+  url.replace("/upload/", "/upload/fl_attachment/");
 
 const iconButton =
   "flex size-11 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition-colors hover:bg-white/30 focus-visible:outline-2 focus-visible:outline-white";
 
-const ImageViewer = ({ src, alt = "Image", open, onOpenChange }: ImageViewerProps) => {
-  const handleShare = async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({ url: src, title: alt });
-        return;
-      }
-      await navigator.clipboard.writeText(src);
-      toast.success("Image link copied");
-    } catch (error) {
-      // closing the share sheet throws AbortError; that is not a failure
-      if ((error as Error).name !== "AbortError") {
-        toast.error("Could not share the image.");
-      }
-    }
-  };
+const ImageViewer = ({
+  src,
+  alt = "Image",
+  open,
+  onOpenChange,
+}: ImageViewerProps) => {
+  const [shareOpen, setShareOpen] = useState(false);
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
@@ -43,7 +36,9 @@ const ImageViewer = ({ src, alt = "Image", open, onOpenChange }: ImageViewerProp
           onClick={(e) => e.target === e.currentTarget && onOpenChange(false)}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 outline-none"
         >
-          <DialogPrimitive.Title className="sr-only">{alt}</DialogPrimitive.Title>
+          <DialogPrimitive.Title className="sr-only">
+            {alt}
+          </DialogPrimitive.Title>
 
           <div className="absolute top-4 right-4 flex gap-3">
             <a
@@ -57,9 +52,9 @@ const ImageViewer = ({ src, alt = "Image", open, onOpenChange }: ImageViewerProp
             </a>
             <button
               type="button"
-              onClick={handleShare}
-              aria-label="Share image"
-              title="Share"
+              onClick={() => setShareOpen(true)}
+              aria-label="Share image to other chats"
+              title="Share to a chat"
               className={iconButton}
             >
               <Share2 className="size-5" />
@@ -80,6 +75,12 @@ const ImageViewer = ({ src, alt = "Image", open, onOpenChange }: ImageViewerProp
           />
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
+
+      <ForwardImageDialog
+        imgUrl={src}
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+      />
     </DialogPrimitive.Root>
   );
 };

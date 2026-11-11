@@ -64,6 +64,7 @@ export interface ChatState {
   updateConversation: (conversation: Partial<Conversation> & { _id: string }) => void;
   markAsSeen: () => Promise<void>;
   addConvo: (convo: Conversation) => void;
+  forwardImage: (conversationId: string, imgUrl: string) => Promise<void>;
   // conversation menu actions
   removeConversation: (conversationId: string) => void;
   removeMember: (conversationId: string, userId: string) => void;

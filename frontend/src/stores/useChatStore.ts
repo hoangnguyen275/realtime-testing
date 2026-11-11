@@ -211,6 +211,26 @@ export const useChatStore = create<ChatState>()(
           };
         });
       },
+      forwardImage: async (conversationId, imgUrl) => {
+        const { user } = useAuthStore.getState();
+        const convo = get().conversations.find((c) => c._id === conversationId);
+
+        if (!convo || !user) throw new Error("Conversation not found");
+
+        if (convo.type === "direct") {
+          const other = convo.participants.find((p) => p._id !== user._id);
+          if (!other) throw new Error("Recipient not found");
+          await chatService.sendDirectMessage(other._id, "", undefined, convo._id, imgUrl);
+        } else {
+          await chatService.sendGroupMessage(convo._id, "", undefined, imgUrl);
+        }
+
+        set((state) => ({
+          conversations: state.conversations.map((c) =>
+            c._id === conversationId ? { ...c, seenBy: [] } : c
+          ),
+        }));
+      },
       removeConversation: (conversationId) => {
         set((state) => {
           const { [conversationId]: _removed, ...restMessages } = state.messages;
