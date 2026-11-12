@@ -24,7 +24,7 @@ export const friendService = {
   async acceptRequest(requestId: string) {
     try {
       const res = await api.post(`/friends/requests/${requestId}/accept`);
-      return res.data.requestAcceptedBy;
+      return res.data.newFriend as { _id: string } | undefined;
     } catch (error) {
       console.error("Error while sending acceptRequest", error);
     }

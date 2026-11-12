@@ -55,6 +55,9 @@ export const sendFriendRequest = async (req, res) => {
       message,
     });
 
+    // tell the recipient right away so their notification dot lights up
+    io.to(to.toString()).emit("friend-request-received", { requestId: request._id });
+
     return res
       .status(201)
       .json({ message: "Friend request sent successfully", request });
@@ -87,6 +90,14 @@ export const acceptFriendRequest = async (req, res) => {
     });
 
     await FriendRequest.findByIdAndDelete(requestId);
+
+    // tell both users so each one gets a dot on the friend list button
+    io.to(request.to.toString()).emit("friend-added", {
+      friendId: request.from.toString(),
+    });
+    io.to(request.from.toString()).emit("friend-added", {
+      friendId: request.to.toString(),
+    });
 
     const from = await User.findById(request.from)
       .select("_id displayName avatarUrl")

@@ -18,7 +18,8 @@ import {
 } from "@/components/ui/sidebar";
 import type { User } from "@/types/user";
 import Logout from "../auth/Logout";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useFriendStore } from "@/stores/useFriendStore";
 import FriendRequestDialog from "../friendRequest/FriendRequestDialog";
 import ProfileDialog from "../profile/ProfileDialog";
 
@@ -26,28 +27,52 @@ export function NavUser({ user }: { user: User }) {
   const { isMobile } = useSidebar();
   const [friendRequestOpen, setfriendRequestOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const {
+    receivedList,
+    seenRequestIds,
+    markRequestsSeen,
+    getAllFriendRequests,
+  } = useFriendStore();
+
+  const hasNewRequests = receivedList.some(
+    (r) => !seenRequestIds.includes(r._id),
+  );
+
+  // catch up on requests that arrived while this tab was in the background
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState === "visible") getAllFriendRequests();
+    };
+    document.addEventListener("visibilitychange", refresh);
+    return () => document.removeEventListener("visibilitychange", refresh);
+  }, [getAllFriendRequests]);
+
+  // looking at the notifications (also covers requests that arrive while it is open) clears the dot
+  useEffect(() => {
+    if (friendRequestOpen && hasNewRequests) markRequestsSeen();
+  }, [friendRequestOpen, hasNewRequests, markRequestsSeen]);
 
   return (
     <>
       <SidebarMenu>
         <SidebarMenuItem>
-          <DropdownMenu>
+          <DropdownMenu onOpenChange={setMenuOpen}>
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton
                 size="lg"
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               >
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage
-                    src={user.avatarUrl}
-                    alt={user.displayName}
-                  />
+                  <AvatarImage src={user.avatarUrl} alt={user.displayName} />
                   <AvatarFallback className="rounded-lg">
                     {user.displayName.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.displayName}</span>
+                  <span className="truncate font-medium">
+                    {user.displayName}
+                  </span>
                   <span className="truncate text-xs">{user.username}</span>
                 </div>
                 <ChevronsUpDown className="ml-auto size-4" />
@@ -62,16 +87,15 @@ export function NavUser({ user }: { user: User }) {
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                   <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarImage
-                      src={user.avatarUrl}
-                      alt={user.username}
-                    />
+                    <AvatarImage src={user.avatarUrl} alt={user.username} />
                     <AvatarFallback className="rounded-lg">
                       {user.displayName.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">{user.displayName}</span>
+                    <span className="truncate font-medium">
+                      {user.displayName}
+                    </span>
                     <span className="truncate text-xs">{user.username}</span>
                   </div>
                 </div>
@@ -85,6 +109,11 @@ export function NavUser({ user }: { user: User }) {
                 <DropdownMenuItem onClick={() => setfriendRequestOpen(true)}>
                   <Bell className="text-muted-foreground dark:group-focus:!text-accent-foreground" />
                   Notifications
+                  {hasNewRequests && (
+                    <span className="ml-auto size-2.5 rounded-full bg-red-500">
+                      <span className="sr-only">New</span>
+                    </span>
+                  )}
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
@@ -96,6 +125,13 @@ export function NavUser({ user }: { user: User }) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* new request: dot on the menu button until the menu is opened */}
+          {hasNewRequests && !menuOpen && (
+            <span className="pointer-events-none absolute -top-1 -right-1 size-3 rounded-full bg-red-500 ring-2 ring-background">
+              <span className="sr-only">You have new friend requests</span>
+            </span>
+          )}
         </SidebarMenuItem>
       </SidebarMenu>
 
@@ -104,10 +140,7 @@ export function NavUser({ user }: { user: User }) {
         setOpen={setfriendRequestOpen}
       />
 
-      <ProfileDialog
-        open={profileOpen}
-        setOpen={setProfileOpen}
-      />
+      <ProfileDialog open={profileOpen} setOpen={setProfileOpen} />
     </>
   );
 }

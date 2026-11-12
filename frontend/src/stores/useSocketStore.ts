@@ -25,6 +25,8 @@ export const useSocketStore = create<SocketState>((set, get) => ({
 
     socket.on("connect", () => {
       console.log("Socket connected");
+      // events sent while the socket was down (e.g. server waking up) are not replayed, so catch up
+      useFriendStore.getState().getAllFriendRequests();
     });
 
     // online users
@@ -77,6 +79,17 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       };
 
       useChatStore.getState().updateConversation(updated);
+    });
+
+    // someone sent me a friend request
+    socket.on("friend-request-received", () => {
+      useFriendStore.getState().getAllFriendRequests();
+    });
+
+    // a friend request was accepted (by me or by the other person)
+    socket.on("friend-added", ({ friendId }) => {
+      useFriendStore.getState().addNewFriend(friendId);
+      useFriendStore.getState().getFriends();
     });
 
     // unfriended (by me or by the other person)

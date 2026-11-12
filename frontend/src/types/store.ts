@@ -90,6 +90,8 @@ export interface FriendState {
   loading: boolean;
   receivedList: FriendRequest[];
   sentList: FriendRequest[];
+  seenRequestIds: string[]; // received requests the user already looked at
+  newFriendIds: string[]; // friends added since the user last opened the friend list
   searchByUsername: (username: string) => Promise<User | null>;
   addFriend: (to: string, message?: string) => Promise<string>;
   getAllFriendRequests: () => Promise<void>;
@@ -97,6 +99,9 @@ export interface FriendState {
   declineRequest: (requestId: string) => Promise<void>;
   getFriends: () => Promise<void>;
   removeFriendLocally: (friendId: string) => void;
+  markRequestsSeen: () => void;
+  addNewFriend: (friendId: string) => void;
+  clearNewFriends: () => void;
   unfriend: (friendId: string) => Promise<void>;
 }
 
